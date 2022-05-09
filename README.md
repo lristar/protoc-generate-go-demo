@@ -1,0 +1,1 @@
+# protoc-generate-go-demo
