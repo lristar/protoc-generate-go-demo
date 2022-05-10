@@ -1,12 +1,14 @@
-package demo_generate
+package main
 
 import (
 	"bytes"
 	"fmt"
 	"html/template"
 	"strings"
+	_ "embed"
 )
 
+//go:embed template.tpl
 var tpl string
 
 type service struct {
@@ -14,14 +16,14 @@ type service struct {
 	FullName string //hello.Demo
 	FilePath string //api/hello/hello.proto
 
-	Method    []*method
+	Methods   []*method
 	MethodSet map[string]*method
 }
 
 func (s *service) execute() string {
 	if s.MethodSet == nil {
 		s.MethodSet = map[string]*method{}
-		for _, m := range s.Method {
+		for _, m := range s.Methods {
 			m1 := m
 			s.MethodSet[m.Name] = m1
 		}
@@ -55,9 +57,9 @@ type method struct {
 }
 
 func (m *method) HandlerName() string {
-	return fmt.Sprintf("%s_%s", m.Name, MathecEnglish(m.Num))
+	return fmt.Sprintf("%s_%d", m.Name,m.Num)
 }
-
+// HasPathParams 是否包含路由参数
 func (m *method) HasPathParams() bool {
 	paths := strings.Split(m.Path, "/")
 	for _, p := range paths {
@@ -68,12 +70,12 @@ func (m *method) HasPathParams() bool {
 	return false
 }
 
-// 转换参数路由 {type} --> :type
-func (m *method) EPathParams() {
+// initPathParams 转换参数路由 {xx} --> :xx
+func (m *method) initPathParams() {
 	paths := strings.Split(m.Path, "/")
-	for i, path := range paths {
-		if len(path) > 0 && (path[0] == '{' && path[len(path)-1] == '}' || path[0] == ':') {
-			paths[i] = ":" + path[1:len(path)-1]
+	for i, p := range paths {
+		if len(p) > 0 && (p[0] == '{' && p[len(p)-1] == '}' || p[0] == ':') {
+			paths[i] = ":" + p[1:len(p)-1]
 		}
 	}
 	m.Path = strings.Join(paths, "/")
